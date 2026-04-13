@@ -1,14 +1,21 @@
-export function computePlayerStats(matches, playerId) {
+export function computePlayerStats(matches, playerId, playerQuadro = 'Quadro 1') {
   let goals = 0
   let assists = 0
   let yellowCards = 0
   let redCards = 0
   let minutesPlayed = 0
-  let matchesPlayed = 0
+  let matchesPresent = 0
+
+  // total matches for this player's quadro
+  const totalQuadroMatches = matches.filter(
+    (m) => (m.quadro ?? 'Quadro 1') === playerQuadro
+  ).length
 
   for (const match of matches) {
+    const presences = match.presences ?? []
+    if (presences.includes(playerId)) matchesPresent++
+
     const playerEvents = match.events.filter((e) => e.playerId === playerId)
-    if (playerEvents.length > 0) matchesPlayed++
     for (const event of playerEvents) {
       if (event.type === 'goal') goals++
       else if (event.type === 'assist') assists++
@@ -18,14 +25,34 @@ export function computePlayerStats(matches, playerId) {
     }
   }
 
-  const goalRatio = matchesPlayed > 0 ? (goals / matchesPlayed).toFixed(2) : '0.00'
+  const frequencia = totalQuadroMatches > 0
+    ? `${matchesPresent}/${totalQuadroMatches}`
+    : '0/0'
 
-  return { playerId, goals, assists, yellowCards, redCards, minutesPlayed, matchesPlayed, goalRatio }
+  const frequenciaPercent = totalQuadroMatches > 0
+    ? Math.round((matchesPresent / totalQuadroMatches) * 100)
+    : 0
+
+  return {
+    playerId,
+    goals,
+    assists,
+    yellowCards,
+    redCards,
+    minutesPlayed,
+    matchesPlayed: matchesPresent,
+    totalQuadroMatches,
+    frequencia,
+    frequenciaPercent,
+  }
 }
 
 export function computeAllStats(matches, players) {
   return players
-    .map((p) => ({ player: p, ...computePlayerStats(matches, p.id) }))
+    .map((p) => ({
+      player: p,
+      ...computePlayerStats(matches, p.id, p.quadro ?? 'Quadro 1'),
+    }))
     .sort((a, b) => {
       if (b.goals !== a.goals) return b.goals - a.goals
       if (b.assists !== a.assists) return b.assists - a.assists

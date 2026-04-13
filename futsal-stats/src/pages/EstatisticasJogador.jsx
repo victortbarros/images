@@ -29,8 +29,9 @@ export function EstatisticasJogador() {
 
   const stats = getPlayerStats(id)
 
+  // matches where player was present OR had events
   const playerMatches = matches
-    .filter((m) => m.events.some((e) => e.playerId === id))
+    .filter((m) => (m.presences ?? []).includes(id) || m.events.some((e) => e.playerId === id))
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 
   const getEventIcon = (t) => EVENT_TYPES.find((e) => e.value === t)?.icon ?? ''
@@ -53,7 +54,7 @@ export function EstatisticasJogador() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-        <StatCard icon="📋" label="Partidas" value={stats.matchesPlayed} />
+        <StatCard icon="📋" label="Jogos" value={stats.frequencia} sub={`${stats.frequenciaPercent}% de frequência`} />
         <StatCard icon="⚽" label="Gols" value={stats.goals} color="text-green-400" />
         <StatCard icon="🎯" label="Assistências" value={stats.assists} />
         <StatCard icon="🟨" label="Cartões Amarelos" value={stats.yellowCards} color="text-yellow-400" />
@@ -80,7 +81,13 @@ export function EstatisticasJogador() {
                     <div className={`text-xs ${resultColor(match)}`}>{formatMatchResult(match)}</div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm text-white font-medium">vs {match.opponent}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm text-white font-medium">vs {match.opponent}</div>
+                      {(match.presences ?? []).includes(id)
+                        ? <span className="text-xs text-green-400">✓ presente</span>
+                        : <span className="text-xs text-slate-500">ausente</span>
+                      }
+                    </div>
                     <div className="text-xs text-slate-400">{formatDate(match.date)}</div>
                     <div className="flex gap-1 mt-1 flex-wrap">
                       {myEvents.map((ev) => (

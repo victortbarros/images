@@ -9,8 +9,11 @@ export function useStats() {
   const teamSummary = useMemo(() => computeTeamSummary(matches), [matches])
 
   const getPlayerStats = useMemo(
-    () => (id) => computePlayerStats(matches, id),
-    [matches]
+    () => (id) => {
+      const player = players.find((p) => p.id === id)
+      return computePlayerStats(matches, id, player?.quadro ?? 'Quadro 1')
+    },
+    [matches, players]
   )
 
   const getRecentMatches = useMemo(

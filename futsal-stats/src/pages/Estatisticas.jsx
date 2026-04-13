@@ -8,16 +8,28 @@ import { EmptyState } from '../components/common/EmptyState'
 import { QUADROS, QUADRO_COLORS } from '../constants/positions'
 
 const COLUMNS = [
-  { key: 'name', label: 'Jogador', numeric: false },
-  { key: 'matchesPlayed', label: 'J', title: 'Partidas' },
-  { key: 'goals', label: 'G', title: 'Gols' },
-  { key: 'assists', label: 'A', title: 'Assistências' },
+  { key: 'name', label: 'Jogador' },
+  { key: 'matchesPlayed', label: 'Jogos', title: 'Partidas presentes' },
+  { key: 'frequenciaPercent', label: 'Freq.', title: 'Frequência (%)' },
+  { key: 'goals', label: 'Gols', title: 'Gols' },
+  { key: 'assists', label: 'Assist.', title: 'Assistências' },
   { key: 'yellowCards', label: 'CA', title: 'Cartões Amarelos' },
   { key: 'redCards', label: 'CV', title: 'Cartões Vermelhos' },
-  { key: 'minutesPlayed', label: 'Min', title: 'Minutos' },
 ]
 
 const TABS = ['Todos', ...QUADROS]
+
+function FrequencyBar({ percent }) {
+  const color = percent >= 75 ? 'bg-green-500' : percent >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+  return (
+    <div className="flex items-center gap-2">
+      <div className="w-16 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+        <div className={`h-full ${color} rounded-full`} style={{ width: `${percent}%` }} />
+      </div>
+      <span className="text-xs text-slate-400">{percent}%</span>
+    </div>
+  )
+}
 
 export function Estatisticas() {
   const navigate = useNavigate()
@@ -62,10 +74,13 @@ export function Estatisticas() {
       </div>
 
       {/* Quadro tabs */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4 flex-wrap">
         {TABS.map((tab) => {
           const isActive = activeTab === tab
           const qColor = QUADRO_COLORS[tab]
+          const count = allStats.filter(({ player }) =>
+            tab === 'Todos' ? true : (player.quadro ?? 'Quadro 1') === tab
+          ).length
           return (
             <button
               key={tab}
@@ -78,12 +93,7 @@ export function Estatisticas() {
                   : 'bg-slate-800 text-slate-400 border-slate-600 hover:text-white'
               }`}
             >
-              {tab}
-              <span className="ml-1.5 text-xs opacity-75">
-                ({allStats.filter(({ player }) =>
-                  tab === 'Todos' ? true : (player.quadro ?? 'Quadro 1') === tab
-                ).length})
-              </span>
+              {tab} <span className="ml-1 text-xs opacity-75">({count})</span>
             </button>
           )
         })}
@@ -102,9 +112,9 @@ export function Estatisticas() {
                 >
                   <div className="flex items-center gap-1">
                     {col.label}
-                    {sortKey === col.key ? (
-                      sortDir === 'desc' ? <ChevronDown size={12} /> : <ChevronUp size={12} />
-                    ) : null}
+                    {sortKey === col.key
+                      ? sortDir === 'desc' ? <ChevronDown size={12} /> : <ChevronUp size={12} />
+                      : null}
                   </div>
                 </th>
               ))}
@@ -118,7 +128,7 @@ export function Estatisticas() {
                 </td>
               </tr>
             ) : (
-              sorted.map(({ player, goals, assists, yellowCards, redCards, minutesPlayed, matchesPlayed }) => (
+              sorted.map(({ player, goals, assists, yellowCards, redCards, matchesPlayed, frequencia, frequenciaPercent }) => (
                 <tr
                   key={player.id}
                   className="border-b border-slate-700/50 last:border-0 hover:bg-slate-700/30 cursor-pointer transition-colors"
@@ -133,12 +143,16 @@ export function Estatisticas() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-slate-300">{matchesPlayed}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-slate-300 font-medium">{frequencia}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <FrequencyBar percent={frequenciaPercent} />
+                  </td>
                   <td className="px-4 py-3 font-semibold text-green-400">{goals}</td>
                   <td className="px-4 py-3 text-slate-300">{assists}</td>
                   <td className="px-4 py-3 text-yellow-400">{yellowCards}</td>
                   <td className="px-4 py-3 text-red-400">{redCards}</td>
-                  <td className="px-4 py-3 text-slate-400">{minutesPlayed}</td>
                 </tr>
               ))
             )}

@@ -10,7 +10,7 @@ export function createPlayer({ name, number, position, quadro = 'Quadro 1' }) {
   }
 }
 
-export function createMatch({ opponent, date, venue, competition, ourScore, theirScore, notes = '' }) {
+export function createMatch({ opponent, date, venue, competition, ourScore, theirScore, notes = '', quadro = 'Quadro 1' }) {
   return {
     id: crypto.randomUUID(),
     opponent,
@@ -20,6 +20,8 @@ export function createMatch({ opponent, date, venue, competition, ourScore, thei
     ourScore: Number(ourScore),
     theirScore: Number(theirScore),
     notes,
+    quadro,
+    presences: [],
     events: [],
     createdAt: new Date().toISOString(),
   }

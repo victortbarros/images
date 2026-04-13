@@ -59,6 +59,28 @@ export function AppProvider({ children }) {
     )
   }, [setMatches])
 
+  const togglePresence = useCallback((matchId, playerId) => {
+    setMatches((prev) =>
+      prev.map((m) => {
+        if (m.id !== matchId) return m
+        const presences = m.presences ?? []
+        const isPresent = presences.includes(playerId)
+        return {
+          ...m,
+          presences: isPresent
+            ? presences.filter((id) => id !== playerId)
+            : [...presences, playerId],
+        }
+      })
+    )
+  }, [setMatches])
+
+  const setPresences = useCallback((matchId, playerIds) => {
+    setMatches((prev) =>
+      prev.map((m) => (m.id === matchId ? { ...m, presences: playerIds } : m))
+    )
+  }, [setMatches])
+
   return (
     <AppContext.Provider
       value={{
@@ -73,6 +95,8 @@ export function AppProvider({ children }) {
         addEvent,
         removeEvent,
         addEventsToMatch,
+        togglePresence,
+        setPresences,
       }}
     >
       {children}
