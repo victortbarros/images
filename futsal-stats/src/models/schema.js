@@ -1,9 +1,10 @@
-export function createPlayer({ name, number, position }) {
+export function createPlayer({ name, number, position, quadro = 'Quadro 1' }) {
   return {
     id: crypto.randomUUID(),
     name,
     number: Number(number),
     position,
+    quadro,
     active: true,
     createdAt: new Date().toISOString(),
   }

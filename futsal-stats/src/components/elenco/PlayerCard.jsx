@@ -1,7 +1,7 @@
 import { Pencil, UserX } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { PlayerAvatar } from './PlayerAvatar'
-import { PositionBadge } from '../common/Badge'
+import { PositionBadge, QuadroBadge } from '../common/Badge'
 import { useStats } from '../../hooks/useStats'
 
 export function PlayerCard({ player, onEdit, onRemove }) {
@@ -19,9 +19,8 @@ export function PlayerCard({ player, onEdit, onRemove }) {
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-semibold text-white truncate">{player.name}</span>
           <PositionBadge position={player.position} />
-          {!player.active && (
-            <span className="text-xs text-slate-500 italic">inativo</span>
-          )}
+          <QuadroBadge quadro={player.quadro ?? 'Quadro 1'} />
+          {!player.active && <span className="text-xs text-slate-500 italic">inativo</span>}
         </div>
         <div className="flex gap-3 mt-1 text-xs text-slate-400">
           <span>⚽ {stats.goals} gols</span>

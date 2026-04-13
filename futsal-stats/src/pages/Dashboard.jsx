@@ -1,21 +1,31 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Users, Calendar } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useStats } from '../hooks/useStats'
 import { StatCard } from '../components/common/StatCard'
-import { MatchCard } from '../components/partidas/MatchCard'
-import { formatMatchResult } from '../utils/formatters'
+import { QuadroBadge } from '../components/common/Badge'
+import { formatDate, formatMatchResult, resultColor } from '../utils/formatters'
+import { QUADROS, QUADRO_COLORS } from '../constants/positions'
 
-function TopScorers({ allStats }) {
+const TABS = ['Todos', ...QUADROS]
+
+function TopScorers({ allStats, quadroFilter }) {
   const navigate = useNavigate()
-  const top = allStats.filter((s) => s.goals > 0).slice(0, 5)
-  if (top.length === 0) return <p className="text-sm text-slate-500 py-4 text-center">Nenhum gol registrado.</p>
 
-  const maxGoals = top[0].goals
+  const filtered = allStats.filter(({ player, goals }) => {
+    if (goals === 0) return false
+    if (quadroFilter === 'Todos') return true
+    return (player.quadro ?? 'Quadro 1') === quadroFilter
+  }).slice(0, 5)
+
+  if (filtered.length === 0) return <p className="text-sm text-slate-500 py-4 text-center">Nenhum gol registrado.</p>
+
+  const maxGoals = filtered[0].goals
 
   return (
     <div className="space-y-2">
-      {top.map(({ player, goals, assists }, i) => (
+      {filtered.map(({ player, goals, assists }, i) => (
         <div
           key={player.id}
           className="flex items-center gap-3 cursor-pointer hover:bg-slate-700/30 rounded-lg p-2 transition-colors"
@@ -23,9 +33,14 @@ function TopScorers({ allStats }) {
         >
           <span className="text-slate-500 text-xs w-4 text-center font-medium">{i + 1}</span>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm text-white font-medium truncate">{player.name}</span>
-              <span className="text-green-400 font-bold text-sm ml-2">{goals} ⚽</span>
+            <div className="flex items-center justify-between mb-1 gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-sm text-white font-medium truncate">{player.name}</span>
+                {quadroFilter === 'Todos' && (
+                  <QuadroBadge quadro={player.quadro ?? 'Quadro 1'} />
+                )}
+              </div>
+              <span className="text-green-400 font-bold text-sm shrink-0">{goals} ⚽</span>
             </div>
             <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
               <div
@@ -45,10 +60,10 @@ export function Dashboard() {
   const navigate = useNavigate()
   const { players, matches } = useApp()
   const { teamSummary, allStats, getRecentMatches } = useStats()
+  const [scorerTab, setScorerTab] = useState('Todos')
 
   const recentMatches = getRecentMatches(5)
   const activePlayers = players.filter((p) => p.active)
-
   const isFirstTime = players.length === 0
 
   return (
@@ -113,7 +128,31 @@ export function Dashboard() {
               </button>
             )}
           </div>
-          <TopScorers allStats={allStats} />
+
+          {/* Quadro filter tabs */}
+          <div className="flex gap-1.5 mb-3">
+            {TABS.map((tab) => {
+              const qColor = QUADRO_COLORS[tab]
+              const isActive = scorerTab === tab
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setScorerTab(tab)}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors border ${
+                    isActive
+                      ? qColor
+                        ? `${qColor.bg} text-white border-transparent`
+                        : 'bg-pitch text-white border-transparent'
+                      : 'bg-slate-700 text-slate-400 border-slate-600 hover:text-white'
+                  }`}
+                >
+                  {tab}
+                </button>
+              )
+            })}
+          </div>
+
+          <TopScorers allStats={allStats} quadroFilter={scorerTab} />
         </div>
 
         {/* Recent matches */}

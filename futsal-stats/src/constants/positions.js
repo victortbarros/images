@@ -14,6 +14,13 @@ export const POSITION_SHORT = {
   'Pivô': 'PIV',
 }
 
+export const QUADROS = ['Quadro 1', 'Quadro 2']
+
+export const QUADRO_COLORS = {
+  'Quadro 1': { bg: 'bg-indigo-600', text: 'text-indigo-400', light: 'bg-indigo-900/40 border-indigo-700' },
+  'Quadro 2': { bg: 'bg-orange-600', text: 'text-orange-400', light: 'bg-orange-900/40 border-orange-700' },
+}
+
 export const EVENT_TYPES = [
   { value: 'goal', label: 'Gol', icon: '⚽' },
   { value: 'assist', label: 'Assistência', icon: '🎯' },

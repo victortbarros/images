@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useStats } from '../hooks/useStats'
 import { PlayerAvatar } from '../components/elenco/PlayerAvatar'
-import { PositionBadge } from '../components/common/Badge'
+import { PositionBadge, QuadroBadge } from '../components/common/Badge'
 import { StatCard } from '../components/common/StatCard'
 import { formatDate, formatMatchResult, resultColor } from '../utils/formatters'
 import { EVENT_TYPES } from '../constants/positions'
@@ -43,9 +43,10 @@ export function EstatisticasJogador() {
         </button>
         <PlayerAvatar player={player} size="md" />
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-xl font-bold text-white">{player.name}</h1>
             <PositionBadge position={player.position} />
+            <QuadroBadge quadro={player.quadro ?? 'Quadro 1'} />
           </div>
           <p className="text-sm text-slate-400">#{player.number}{!player.active ? ' · inativo' : ''}</p>
         </div>

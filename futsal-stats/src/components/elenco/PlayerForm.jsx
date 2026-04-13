@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
-import { POSITIONS } from '../../constants/positions'
+import { POSITIONS, QUADROS } from '../../constants/positions'
 
 export function PlayerForm({ player, onClose }) {
   const { players, addPlayer, updatePlayer } = useApp()
@@ -8,6 +8,7 @@ export function PlayerForm({ player, onClose }) {
     name: player?.name ?? '',
     number: player?.number ?? '',
     position: player?.position ?? 'Ala',
+    quadro: player?.quadro ?? 'Quadro 1',
   })
   const [error, setError] = useState('')
 
@@ -27,9 +28,9 @@ export function PlayerForm({ player, onClose }) {
     if (duplicate) return setError(`Número ${num} já está em uso por ${duplicate.name}.`)
 
     if (player) {
-      updatePlayer(player.id, { name: form.name.trim(), number: num, position: form.position })
+      updatePlayer(player.id, { name: form.name.trim(), number: num, position: form.position, quadro: form.quadro })
     } else {
-      addPlayer({ name: form.name.trim(), number: num, position: form.position })
+      addPlayer({ name: form.name.trim(), number: num, position: form.position, quadro: form.quadro })
     }
     onClose()
   }
@@ -40,9 +41,17 @@ export function PlayerForm({ player, onClose }) {
         <label className="label">Nome *</label>
         <input className="input" value={form.name} onChange={set('name')} maxLength={50} placeholder="Nome do jogador" />
       </div>
-      <div>
-        <label className="label">Número da camisa *</label>
-        <input className="input" type="number" min={1} max={99} value={form.number} onChange={set('number')} placeholder="Ex: 10" />
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="label">Número da camisa *</label>
+          <input className="input" type="number" min={1} max={99} value={form.number} onChange={set('number')} placeholder="Ex: 10" />
+        </div>
+        <div>
+          <label className="label">Quadro *</label>
+          <select className="input" value={form.quadro} onChange={set('quadro')}>
+            {QUADROS.map((q) => <option key={q} value={q}>{q}</option>)}
+          </select>
+        </div>
       </div>
       <div>
         <label className="label">Posição *</label>

@@ -11,9 +11,11 @@ export function useLocalStorage(key, initialValue) {
   })
 
   const set = (next) => {
-    const resolved = typeof next === 'function' ? next(value) : next
-    setValue(resolved)
-    localStorage.setItem(key, JSON.stringify(resolved))
+    setValue((prev) => {
+      const resolved = typeof next === 'function' ? next(prev) : next
+      localStorage.setItem(key, JSON.stringify(resolved))
+      return resolved
+    })
   }
 
   return [value, set]
