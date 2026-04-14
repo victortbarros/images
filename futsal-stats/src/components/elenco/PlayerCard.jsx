@@ -1,13 +1,15 @@
 import { Pencil, UserX } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { PlayerAvatar } from './PlayerAvatar'
-import { PositionBadge, QuadroBadge } from '../common/Badge'
+import { PositionBadge, QuadrosBadges } from '../common/Badge'
 import { useStats } from '../../hooks/useStats'
+import { getPlayerQuadros } from '../../utils/playerHelpers'
 
 export function PlayerCard({ player, onEdit, onRemove }) {
   const navigate = useNavigate()
   const { getPlayerStats } = useStats()
   const stats = getPlayerStats(player.id)
+  const quadros = getPlayerQuadros(player)
 
   return (
     <div
@@ -19,29 +21,21 @@ export function PlayerCard({ player, onEdit, onRemove }) {
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-semibold text-white truncate">{player.name}</span>
           <PositionBadge position={player.position} />
-          <QuadroBadge quadro={player.quadro ?? 'Quadro 1'} />
+          <QuadrosBadges quadros={quadros} />
           {!player.active && <span className="text-xs text-slate-500 italic">inativo</span>}
         </div>
         <div className="flex gap-3 mt-1 text-xs text-slate-400">
           <span>⚽ {stats.goals} gols</span>
           <span>🎯 {stats.assists} assist.</span>
-          <span>📋 {stats.matchesPlayed} jogos</span>
+          <span>📋 {stats.frequencia}</span>
         </div>
       </div>
       <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-        <button
-          className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg transition-colors"
-          onClick={onEdit}
-          title="Editar"
-        >
+        <button className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg transition-colors" onClick={onEdit} title="Editar">
           <Pencil size={15} />
         </button>
         {player.active && (
-          <button
-            className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-600 rounded-lg transition-colors"
-            onClick={onRemove}
-            title="Desativar"
-          >
+          <button className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-600 rounded-lg transition-colors" onClick={onRemove} title="Desativar">
             <UserX size={15} />
           </button>
         )}

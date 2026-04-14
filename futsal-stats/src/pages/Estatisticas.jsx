@@ -1,17 +1,20 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronUp, ChevronDown, X } from 'lucide-react'
+import { useApp } from '../context/AppContext'
 import { useStats } from '../hooks/useStats'
-import { PositionBadge, QuadroBadge } from '../components/common/Badge'
+import { PositionBadge, QuadrosBadges } from '../components/common/Badge'
 import { EmptyState } from '../components/common/EmptyState'
 import { QUADROS, QUADRO_COLORS } from '../constants/positions'
+import { getPlayerQuadros } from '../utils/playerHelpers'
+import { computeAllStats } from '../utils/statsCalculator'
 
 const COLUMNS = [
   { key: 'name', label: 'Jogador' },
   { key: 'matchesPlayed', label: 'Jogos', title: 'Partidas presentes' },
   { key: 'frequenciaPercent', label: 'Freq.', title: 'Frequência (%)' },
-  { key: 'goals', label: 'Gols', title: 'Gols' },
-  { key: 'assists', label: 'Assist.', title: 'Assistências' },
+  { key: 'goals', label: 'Gols' },
+  { key: 'assists', label: 'Assist.' },
   { key: 'yellowCards', label: 'CA', title: 'Cartões Amarelos' },
   { key: 'redCards', label: 'CV', title: 'Cartões Vermelhos' },
 ]
@@ -32,10 +35,26 @@ function FrequencyBar({ percent }) {
 
 export function Estatisticas() {
   const navigate = useNavigate()
-  const { allStats } = useStats()
+  const { players, matches } = useApp()
   const [sortKey, setSortKey] = useState('goals')
   const [sortDir, setSortDir] = useState('desc')
   const [activeTab, setActiveTab] = useState('Todos')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+
+  const filteredMatches = useMemo(() => {
+    if (!dateFrom && !dateTo) return matches
+    return matches.filter((m) => {
+      if (dateFrom && m.date < dateFrom) return false
+      if (dateTo && m.date > dateTo) return false
+      return true
+    })
+  }, [matches, dateFrom, dateTo])
+
+  const allStats = useMemo(() => computeAllStats(filteredMatches, players), [filteredMatches, players])
+
+  const hasDateFilter = dateFrom || dateTo
+  const clearDates = () => { setDateFrom(''); setDateTo('') }
 
   const toggleSort = (key) => {
     if (sortKey === key) setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))
@@ -44,7 +63,7 @@ export function Estatisticas() {
 
   const filtered = useMemo(() => allStats.filter(({ player }) => {
     if (activeTab === 'Todos') return true
-    return (player.quadro ?? 'Quadro 1') === activeTab
+    return getPlayerQuadros(player).includes(activeTab)
   }), [allStats, activeTab])
 
   const sorted = useMemo(() => [...filtered].sort((a, b) => {
@@ -54,16 +73,12 @@ export function Estatisticas() {
     return sortDir === 'asc' ? av - bv : bv - av
   }), [filtered, sortKey, sortDir])
 
-  // Totals row — for freq: sum presences / sum totalQuadroMatches
   const totals = useMemo(() => {
     const totalPresences = sorted.reduce((s, r) => s + r.matchesPlayed, 0)
-    const totalQuadroMatches = sorted.reduce((s, r) => s + r.totalQuadroMatches, 0)
-    const freqPct = totalQuadroMatches > 0 ? Math.round((totalPresences / totalQuadroMatches) * 100) : 0
+    const totalQ = sorted.reduce((s, r) => s + r.totalQuadroMatches, 0)
     return {
-      matchesPlayed: totalPresences,
-      totalQuadroMatches,
-      frequencia: totalQuadroMatches > 0 ? `${totalPresences}/${totalQuadroMatches}` : '0/0',
-      frequenciaPercent: freqPct,
+      frequencia: totalQ > 0 ? `${totalPresences}/${totalQ}` : '0/0',
+      frequenciaPercent: totalQ > 0 ? Math.round((totalPresences / totalQ) * 100) : 0,
       goals: sorted.reduce((s, r) => s + r.goals, 0),
       assists: sorted.reduce((s, r) => s + r.assists, 0),
       yellowCards: sorted.reduce((s, r) => s + r.yellowCards, 0),
@@ -79,29 +94,51 @@ export function Estatisticas() {
     <div>
       <div className="mb-4">
         <h1 className="text-xl font-bold text-white">Gestão da Equipe</h1>
-        <p className="text-sm text-slate-400">Clique em um jogador para ver detalhes · Clique no cabeçalho para ordenar</p>
+        <p className="text-sm text-slate-400">Clique em um jogador para detalhes · Clique no cabeçalho para ordenar</p>
       </div>
 
-      <div className="flex gap-2 mb-4 flex-wrap">
-        {TABS.map((tab) => {
-          const isActive = activeTab === tab
-          const qColor = QUADRO_COLORS[tab]
-          const count = allStats.filter(({ player }) => tab === 'Todos' ? true : (player.quadro ?? 'Quadro 1') === tab).length
-          return (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
-                isActive
-                  ? qColor ? `${qColor.bg} text-white border-transparent` : 'bg-pitch text-white border-transparent'
-                  : 'bg-slate-800 text-slate-400 border-slate-600 hover:text-white'
-              }`}
-            >
-              {tab} <span className="ml-1 text-xs opacity-75">({count})</span>
+      {/* Quadro tabs + date filter */}
+      <div className="flex flex-wrap gap-2 mb-4 items-center">
+        <div className="flex gap-2">
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab
+            const qColor = QUADRO_COLORS[tab]
+            const count = allStats.filter(({ player }) =>
+              tab === 'Todos' ? true : getPlayerQuadros(player).includes(tab)
+            ).length
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                  isActive
+                    ? qColor ? `${qColor.bg} text-white border-transparent` : 'bg-pitch text-white border-transparent'
+                    : 'bg-slate-800 text-slate-400 border-slate-600 hover:text-white'
+                }`}
+              >
+                {tab} <span className="ml-1 text-xs opacity-75">({count})</span>
+              </button>
+            )
+          })}
+        </div>
+        <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+          <span className="text-xs text-slate-500">Período:</span>
+          <input type="date" className="input text-xs w-auto py-1" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+          <span className="text-xs text-slate-500">–</span>
+          <input type="date" className="input text-xs w-auto py-1" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+          {hasDateFilter && (
+            <button className="text-xs text-slate-400 hover:text-white flex items-center gap-1" onClick={clearDates}>
+              <X size={12} /> Limpar
             </button>
-          )
-        })}
+          )}
+        </div>
       </div>
+
+      {hasDateFilter && (
+        <p className="text-xs text-amber-400 mb-3">
+          ⚠ Estatísticas filtradas pelo período selecionado ({filteredMatches.length} de {matches.length} partidas)
+        </p>
+      )}
 
       <div className="card overflow-x-auto">
         <table className="w-full text-sm">
@@ -124,9 +161,9 @@ export function Estatisticas() {
           </thead>
           <tbody>
             {sorted.length === 0 ? (
-              <tr><td colSpan={7} className="text-center py-8 text-slate-500 text-sm">Nenhum jogador neste quadro.</td></tr>
+              <tr><td colSpan={7} className="text-center py-8 text-slate-500 text-sm">Nenhum jogador neste filtro.</td></tr>
             ) : (
-              sorted.map(({ player, goals, assists, yellowCards, redCards, matchesPlayed, frequencia, frequenciaPercent }) => (
+              sorted.map(({ player, goals, assists, yellowCards, redCards, frequencia, frequenciaPercent }) => (
                 <tr
                   key={player.id}
                   className="border-b border-slate-700/50 last:border-0 hover:bg-slate-700/30 cursor-pointer transition-colors"
@@ -136,7 +173,7 @@ export function Estatisticas() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-white font-medium">{player.name}</span>
                       <PositionBadge position={player.position} />
-                      {activeTab === 'Todos' && <QuadroBadge quadro={player.quadro ?? 'Quadro 1'} />}
+                      {activeTab === 'Todos' && <QuadrosBadges quadros={getPlayerQuadros(player)} />}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-slate-300 font-medium">{frequencia}</td>
@@ -153,7 +190,7 @@ export function Estatisticas() {
             <tfoot>
               <tr className="border-t-2 border-slate-600 bg-slate-700/30">
                 <td className="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wide">Total</td>
-                <td className="px-4 py-2 text-slate-300 font-bold text-sm">{totals.frequencia}</td>
+                <td className="px-4 py-2 text-slate-300 font-bold">{totals.frequencia}</td>
                 <td className="px-4 py-2"><FrequencyBar percent={totals.frequenciaPercent} /></td>
                 <td className="px-4 py-2 font-bold text-green-400">{totals.goals}</td>
                 <td className="px-4 py-2 font-bold text-slate-300">{totals.assists}</td>

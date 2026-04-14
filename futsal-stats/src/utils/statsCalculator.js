@@ -1,4 +1,6 @@
-export function computePlayerStats(matches, playerId, playerQuadro = 'Quadro 1') {
+import { getPlayerQuadros } from './playerHelpers'
+
+export function computePlayerStats(matches, playerId, playerQuadros = ['Quadro 1']) {
   let goals = 0
   let assists = 0
   let yellowCards = 0
@@ -6,17 +8,15 @@ export function computePlayerStats(matches, playerId, playerQuadro = 'Quadro 1')
   let minutesPlayed = 0
   let matchesPresent = 0
 
-  // total matches for this player's quadro
   const totalQuadroMatches = matches.filter(
-    (m) => (m.quadro ?? 'Quadro 1') === playerQuadro
+    (m) => playerQuadros.includes(m.quadro ?? 'Quadro 1')
   ).length
 
   for (const match of matches) {
     const presences = match.presences ?? []
     if (presences.includes(playerId)) matchesPresent++
 
-    const playerEvents = match.events.filter((e) => e.playerId === playerId)
-    for (const event of playerEvents) {
+    for (const event of match.events.filter((e) => e.playerId === playerId)) {
       if (event.type === 'goal') goals++
       else if (event.type === 'assist') assists++
       else if (event.type === 'yellow_card') yellowCards++
@@ -51,7 +51,7 @@ export function computeAllStats(matches, players) {
   return players
     .map((p) => ({
       player: p,
-      ...computePlayerStats(matches, p.id, p.quadro ?? 'Quadro 1'),
+      ...computePlayerStats(matches, p.id, getPlayerQuadros(p)),
     }))
     .sort((a, b) => {
       if (b.goals !== a.goals) return b.goals - a.goals
@@ -62,7 +62,6 @@ export function computeAllStats(matches, players) {
 
 export function computeTeamSummary(matches) {
   let wins = 0, draws = 0, losses = 0, goalsFor = 0, goalsAgainst = 0
-
   for (const m of matches) {
     goalsFor += m.ourScore
     goalsAgainst += m.theirScore
@@ -70,14 +69,5 @@ export function computeTeamSummary(matches) {
     else if (m.ourScore === m.theirScore) draws++
     else losses++
   }
-
-  return {
-    totalMatches: matches.length,
-    wins,
-    draws,
-    losses,
-    goalsFor,
-    goalsAgainst,
-    goalDifference: goalsFor - goalsAgainst,
-  }
+  return { totalMatches: matches.length, wins, draws, losses, goalsFor, goalsAgainst, goalDifference: goalsFor - goalsAgainst }
 }

@@ -1,7 +1,7 @@
 import { POSITION_COLORS, POSITION_SHORT, QUADRO_COLORS } from '../../constants/positions'
 
 export function PositionBadge({ position }) {
-  const colors = POSITION_COLORS[position] ?? { bg: 'bg-slate-600', text: 'text-slate-300' }
+  const colors = POSITION_COLORS[position] ?? { bg: 'bg-slate-600' }
   return (
     <span className={`text-xs font-bold px-2 py-0.5 rounded ${colors.bg} text-white`}>
       {POSITION_SHORT[position] ?? position}
@@ -14,6 +14,14 @@ export function QuadroBadge({ quadro }) {
   return (
     <span className={`text-xs font-bold px-2 py-0.5 rounded ${colors.bg} text-white`}>
       {quadro}
+    </span>
+  )
+}
+
+export function QuadrosBadges({ quadros = [] }) {
+  return (
+    <span className="flex gap-1 flex-wrap">
+      {quadros.map((q) => <QuadroBadge key={q} quadro={q} />)}
     </span>
   )
 }

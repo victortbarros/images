@@ -7,7 +7,8 @@ import { ConfirmDialog } from '../components/common/ConfirmDialog'
 import { EmptyState } from '../components/common/EmptyState'
 import { PlayerCard } from '../components/elenco/PlayerCard'
 import { PlayerForm } from '../components/elenco/PlayerForm'
-import { POSITIONS } from '../constants/positions'
+import { POSITIONS, QUADROS } from '../constants/positions'
+import { getPlayerQuadros } from '../utils/playerHelpers'
 
 const SORT_OPTIONS = [
   { value: 'name', label: 'Nome' },
@@ -17,6 +18,8 @@ const SORT_OPTIONS = [
   { value: 'matchesPlayed', label: 'Partidas' },
 ]
 
+const ALL_QUADROS = ['Todos', ...QUADROS]
+
 export function Elenco() {
   const { players, removePlayer } = useApp()
   const { allStats } = useStats()
@@ -25,6 +28,7 @@ export function Elenco() {
   const [removeTarget, setRemoveTarget] = useState(null)
   const [search, setSearch] = useState('')
   const [posFilter, setPosFilter] = useState('Todas')
+  const [quadroFilter, setQuadroFilter] = useState('Todos')
   const [sortBy, setSortBy] = useState('name')
   const [showInactive, setShowInactive] = useState(false)
 
@@ -39,6 +43,7 @@ export function Elenco() {
       .filter((p) => {
         if (!showInactive && !p.active) return false
         if (posFilter !== 'Todas' && p.position !== posFilter) return false
+        if (quadroFilter !== 'Todos' && !getPlayerQuadros(p).includes(quadroFilter)) return false
         if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false
         return true
       })
@@ -49,19 +54,12 @@ export function Elenco() {
         const sb = statsMap[b.id] ?? {}
         return (sb[sortBy] ?? 0) - (sa[sortBy] ?? 0)
       })
-  }, [players, search, posFilter, sortBy, showInactive, statsMap])
+  }, [players, search, posFilter, quadroFilter, sortBy, showInactive, statsMap])
 
-  // Totals for visible players
-  const totals = useMemo(() => {
-    return filtered.reduce((acc, p) => {
-      const s = statsMap[p.id] ?? {}
-      return {
-        goals: acc.goals + (s.goals ?? 0),
-        assists: acc.assists + (s.assists ?? 0),
-        matchesPlayed: acc.matchesPlayed + (s.matchesPlayed ?? 0),
-      }
-    }, { goals: 0, assists: 0, matchesPlayed: 0 })
-  }, [filtered, statsMap])
+  const totals = useMemo(() => filtered.reduce((acc, p) => {
+    const s = statsMap[p.id] ?? {}
+    return { goals: acc.goals + (s.goals ?? 0), assists: acc.assists + (s.assists ?? 0), matchesPlayed: acc.matchesPlayed + (s.matchesPlayed ?? 0) }
+  }, { goals: 0, assists: 0, matchesPlayed: 0 }), [filtered, statsMap])
 
   const activePlayers = players.filter((p) => p.active)
 
@@ -77,34 +75,52 @@ export function Elenco() {
         </button>
       </div>
 
-      {/* Filters row */}
-      <div className="flex gap-2 mb-2 flex-wrap">
-        <div className="relative flex-1 min-w-36">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input className="input pl-8 text-xs" placeholder="Buscar jogador..." value={search} onChange={(e) => setSearch(e.target.value)} />
+      {/* Filters */}
+      <div className="card p-3 mb-4 space-y-2">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input className="input pl-8 text-xs" placeholder="Buscar jogador..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <select className="input text-xs w-auto" value={posFilter} onChange={(e) => setPosFilter(e.target.value)}>
+            <option value="Todas">Todas posições</option>
+            {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <select className="input text-xs w-auto" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>↕ {o.label}</option>)}
+          </select>
         </div>
-        <select className="input text-xs w-auto" value={posFilter} onChange={(e) => setPosFilter(e.target.value)}>
-          <option value="Todas">Todas posições</option>
-          {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-        </select>
-        <select className="input text-xs w-auto" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-          {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>↕ {o.label}</option>)}
-        </select>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex gap-1.5">
+            {ALL_QUADROS.map((q) => (
+              <button
+                key={q}
+                onClick={() => setQuadroFilter(q)}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors border ${
+                  quadroFilter === q
+                    ? 'bg-pitch text-white border-transparent'
+                    : 'bg-slate-700 text-slate-400 border-slate-600 hover:text-white'
+                }`}
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+          <label className="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer select-none ml-auto">
+            <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} className="rounded" />
+            Inativos
+          </label>
+        </div>
       </div>
 
-      <div className="flex items-center justify-between mb-3">
-        <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
-          <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} className="rounded" />
-          Mostrar inativos
-        </label>
-        {filtered.length > 0 && (
-          <div className="flex gap-3 text-xs text-slate-400">
-            <span>⚽ {totals.goals} gols</span>
-            <span>🎯 {totals.assists} assist.</span>
-            <span>📋 {totals.matchesPlayed} presenças</span>
-          </div>
-        )}
-      </div>
+      {filtered.length > 0 && (
+        <div className="flex gap-3 text-xs text-slate-400 mb-3 px-1">
+          <span>⚽ {totals.goals} gols</span>
+          <span>🎯 {totals.assists} assist.</span>
+          <span>📋 {totals.matchesPlayed} presenças</span>
+          <span className="text-slate-500">({filtered.length} jogador{filtered.length !== 1 ? 'es' : ''})</span>
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <EmptyState
@@ -112,9 +128,7 @@ export function Elenco() {
           title={players.length === 0 ? 'Nenhum jogador cadastrado' : 'Nenhum resultado encontrado'}
           description={players.length === 0 ? 'Adicione jogadores ao elenco para começar a registrar estatísticas.' : undefined}
           action={players.length === 0 ? (
-            <button className="btn-primary" onClick={() => setShowForm(true)}>
-              <Plus size={16} /> Adicionar primeiro jogador
-            </button>
+            <button className="btn-primary" onClick={() => setShowForm(true)}><Plus size={16} /> Adicionar primeiro jogador</button>
           ) : undefined}
         />
       ) : (

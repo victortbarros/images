@@ -1,19 +1,21 @@
 import { useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { computePlayerStats, computeAllStats, computeTeamSummary } from '../utils/statsCalculator'
+import { getPlayerQuadros } from '../utils/playerHelpers'
 
-export function useStats() {
+export function useStats(filteredMatches = null) {
   const { players, matches } = useApp()
+  const effectiveMatches = filteredMatches ?? matches
 
-  const allStats = useMemo(() => computeAllStats(matches, players), [matches, players])
-  const teamSummary = useMemo(() => computeTeamSummary(matches), [matches])
+  const allStats = useMemo(() => computeAllStats(effectiveMatches, players), [effectiveMatches, players])
+  const teamSummary = useMemo(() => computeTeamSummary(effectiveMatches), [effectiveMatches])
 
   const getPlayerStats = useMemo(
     () => (id) => {
       const player = players.find((p) => p.id === id)
-      return computePlayerStats(matches, id, player?.quadro ?? 'Quadro 1')
+      return computePlayerStats(effectiveMatches, id, getPlayerQuadros(player))
     },
-    [matches, players]
+    [effectiveMatches, players]
   )
 
   const getRecentMatches = useMemo(

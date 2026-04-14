@@ -1,10 +1,11 @@
-export function createPlayer({ name, number, position, quadro = 'Quadro 1' }) {
+export function createPlayer({ name, number, position, quadro = 'Quadro 1', quadros }) {
   return {
     id: crypto.randomUUID(),
     name,
     number: Number(number),
     position,
-    quadro,
+    // quadros is the canonical field; quadro kept for backwards compat reads
+    quadros: quadros ?? [quadro],
     active: true,
     createdAt: new Date().toISOString(),
   }
