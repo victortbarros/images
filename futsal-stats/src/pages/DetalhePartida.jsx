@@ -7,11 +7,12 @@ import { VenueBadge, QuadroBadge } from '../components/common/Badge'
 import { formatDate, formatMatchResult, resultColor } from '../utils/formatters'
 import { EVENT_TYPES, QUADRO_COLORS } from '../constants/positions'
 import { createEvent } from '../models/schema'
+import { getPlayerQuadros } from '../utils/playerHelpers'
 
 function PresenceSection({ match, players, togglePresence }) {
   const quadro = match.quadro ?? 'Quadro 1'
   const qColor = QUADRO_COLORS[quadro]
-  const quadroPlayers = players.filter((p) => p.active && (p.quadro ?? 'Quadro 1') === quadro)
+  const quadroPlayers = players.filter((p) => p.active && getPlayerQuadros(p).includes(quadro))
   const presences = match.presences ?? []
 
   if (quadroPlayers.length === 0) return null
@@ -60,7 +61,7 @@ function AddEventForm({ matchId, players, match, onClose }) {
   const presences = match.presences ?? []
   // prefer present players, fallback to all active from quadro
   const eligiblePlayers = players.filter(
-    (p) => p.active && (p.quadro ?? 'Quadro 1') === quadro && (presences.length === 0 || presences.includes(p.id))
+    (p) => p.active && getPlayerQuadros(p).includes(quadro) && (presences.length === 0 || presences.includes(p.id))
   )
 
   const handleAdd = () => {
@@ -130,7 +131,8 @@ export function DetalhePartida() {
     )
   }
 
-  const getPlayerName = (pid) => players.find((p) => p.id === pid)?.name ?? 'Jogador desconhecido'
+  const getPlayer = (pid) => players.find((p) => p.id === pid)
+  const getPlayerName = (pid) => getPlayer(pid)?.name ?? 'Jogador desconhecido'
   const getEventLabel = (t) => EVENT_TYPES.find((e) => e.value === t)?.label ?? t
   const getEventIcon = (t) => EVENT_TYPES.find((e) => e.value === t)?.icon ?? ''
 
@@ -199,7 +201,12 @@ export function DetalhePartida() {
               <div key={ev.id} className="flex items-center gap-2 py-2 border-b border-slate-700 last:border-0 text-sm">
                 <span className="text-base">{getEventIcon(ev.type)}</span>
                 <span className="text-slate-400 text-xs w-16">{getEventLabel(ev.type)}</span>
-                <span className="text-white font-medium flex-1">{getPlayerName(ev.playerId)}</span>
+                <button
+                  className="text-white font-medium flex-1 text-left hover:text-green-400 transition-colors"
+                  onClick={() => { const p = getPlayer(ev.playerId); if (p) navigate(`/elenco/${p.id}`) }}
+                >
+                  {getPlayerName(ev.playerId)}
+                </button>
                 {ev.minute && <span className="text-slate-500 text-xs">{ev.minute}'</span>}
                 {ev.type === 'minutes' && <span className="text-slate-500 text-xs">{ev.value} min</span>}
                 <button

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, BarChart2, Settings } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, BarChart2, Settings, DollarSign, FileText } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { SettingsModal } from '../common/SettingsModal'
 
@@ -9,6 +9,8 @@ const links = [
   { to: '/elenco', icon: Users, label: 'Elenco' },
   { to: '/partidas', icon: Calendar, label: 'Partidas' },
   { to: '/estatisticas', icon: BarChart2, label: 'Gestão da Equipe' },
+  { to: '/financeiro', icon: DollarSign, label: 'Financeiro' },
+  { to: '/relatorios', icon: FileText, label: 'Relatórios' },
 ]
 
 export function Sidebar() {

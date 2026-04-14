@@ -7,6 +7,8 @@ import { Partidas } from '../pages/Partidas'
 import { NovaPartida } from '../pages/NovaPartida'
 import { DetalhePartida } from '../pages/DetalhePartida'
 import { Estatisticas } from '../pages/Estatisticas'
+import { Financeiro } from '../pages/Financeiro'
+import { Relatorios } from '../pages/Relatorios'
 
 export const router = createBrowserRouter([
   {
@@ -20,6 +22,8 @@ export const router = createBrowserRouter([
       { path: 'partidas/nova', element: <NovaPartida /> },
       { path: 'partidas/:id', element: <DetalhePartida /> },
       { path: 'estatisticas', element: <Estatisticas /> },
+      { path: 'financeiro', element: <Financeiro /> },
+      { path: 'relatorios', element: <Relatorios /> },
     ],
   },
 ])

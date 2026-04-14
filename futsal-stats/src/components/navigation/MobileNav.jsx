@@ -1,11 +1,13 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Users, Calendar, BarChart2 } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, BarChart2, DollarSign, FileText } from 'lucide-react'
 
 const links = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/elenco', icon: Users, label: 'Elenco' },
   { to: '/partidas', icon: Calendar, label: 'Partidas' },
   { to: '/estatisticas', icon: BarChart2, label: 'Equipe' },
+  { to: '/financeiro', icon: DollarSign, label: 'Financeiro' },
+  { to: '/relatorios', icon: FileText, label: 'Relatórios' },
 ]
 
 export function MobileNav() {

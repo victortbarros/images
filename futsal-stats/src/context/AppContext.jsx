@@ -10,6 +10,7 @@ export function AppProvider({ children }) {
   const [players, setPlayers] = useLocalStorage('futsal_players', [])
   const [matches, setMatches] = useLocalStorage('futsal_matches', [])
   const [settings, setSettings] = useLocalStorage('futsal_settings', DEFAULT_SETTINGS)
+  const [entries, setEntries] = useLocalStorage('futsal_financial', [])
 
   // ── Settings ─────────────────────────────────────────────────────────────
   const updateSettings = useCallback((data) => {
@@ -84,14 +85,37 @@ export function AppProvider({ children }) {
     )
   }, [setMatches])
 
+  // ── Financial actions ────────────────────────────────────────────────────
+  const addEntry = useCallback((data) => {
+    const entry = {
+      id: crypto.randomUUID(),
+      type: data.type,
+      category: data.category,
+      description: data.description ?? '',
+      amount: Number(data.amount),
+      date: data.date,
+      createdAt: new Date().toISOString(),
+    }
+    setEntries((prev) => [entry, ...prev])
+  }, [setEntries])
+
+  const updateEntry = useCallback((id, data) => {
+    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ...data, amount: Number(data.amount) } : e)))
+  }, [setEntries])
+
+  const deleteEntry = useCallback((id) => {
+    setEntries((prev) => prev.filter((e) => e.id !== id))
+  }, [setEntries])
+
   return (
     <AppContext.Provider value={{
-      players, matches, settings,
+      players, matches, settings, entries,
       updateSettings,
       addPlayer, updatePlayer, removePlayer,
       addMatch, updateMatch, deleteMatch,
       addEvent, removeEvent, addEventsToMatch,
       togglePresence, setPresences,
+      addEntry, updateEntry, deleteEntry,
     }}>
       {children}
     </AppContext.Provider>
