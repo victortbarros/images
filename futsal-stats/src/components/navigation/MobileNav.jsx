@@ -5,7 +5,7 @@ const links = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/elenco', icon: Users, label: 'Elenco' },
   { to: '/partidas', icon: Calendar, label: 'Partidas' },
-  { to: '/estatisticas', icon: BarChart2, label: 'Stats' },
+  { to: '/estatisticas', icon: BarChart2, label: 'Equipe' },
 ]
 
 export function MobileNav() {

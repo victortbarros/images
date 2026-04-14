@@ -5,7 +5,7 @@ import { useApp } from '../context/AppContext'
 import { createEvent } from '../models/schema'
 import { VENUE_OPTIONS, EVENT_TYPES, QUADROS, QUADRO_COLORS } from '../constants/positions'
 
-const COMPETITION_SUGGESTIONS = ['Amistoso', 'Liga Municipal', 'Copa', 'Torneio', 'Campeonato']
+const COMPETITION_OPTIONS = ['Liga JR', 'Festival', 'Amistoso', 'Copa', 'Torneio', 'Campeonato']
 
 function Step1({ form, setForm, onNext }) {
   const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
@@ -38,10 +38,10 @@ function Step1({ form, setForm, onNext }) {
         </div>
         <div>
           <label className="label">Competição</label>
-          <input className="input" value={form.competition} onChange={set('competition')} list="competitions" placeholder="Ex: Liga Municipal" />
-          <datalist id="competitions">
-            {COMPETITION_SUGGESTIONS.map((s) => <option key={s} value={s} />)}
-          </datalist>
+          <select className="input" value={form.competition} onChange={set('competition')}>
+            <option value="">Selecionar...</option>
+            {COMPETITION_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">

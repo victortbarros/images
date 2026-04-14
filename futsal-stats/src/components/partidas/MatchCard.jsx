@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { formatDate, formatMatchResult, resultColor, resultBg } from '../../utils/formatters'
-import { VenueBadge } from '../common/Badge'
+import { VenueBadge, QuadroBadge } from '../common/Badge'
 
 export function MatchCard({ match }) {
   const navigate = useNavigate()
@@ -30,6 +30,7 @@ export function MatchCard({ match }) {
             <span className="text-xs text-slate-500">· {match.competition}</span>
           )}
           <VenueBadge venue={match.venue} />
+          <QuadroBadge quadro={match.quadro ?? 'Quadro 1'} />
         </div>
       </div>
 
