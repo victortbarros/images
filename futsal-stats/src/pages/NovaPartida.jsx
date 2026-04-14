@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Plus, Trash2, Check, UserCheck } from 'lucide-re
 import { useApp } from '../context/AppContext'
 import { createEvent } from '../models/schema'
 import { VENUE_OPTIONS, EVENT_TYPES, QUADROS, QUADRO_COLORS } from '../constants/positions'
+import { getPlayerQuadros } from '../utils/playerHelpers'
 
 const COMPETITION_OPTIONS = ['Liga JR', 'Festival', 'Amistoso', 'Copa', 'Torneio', 'Campeonato']
 
@@ -73,7 +74,7 @@ function Step2({ form, events, setEvents, presences, setPresences, players, onBa
   const [minute, setMinute] = useState('')
   const [value, setValue] = useState('1')
 
-  const quadroPlayers = players.filter((p) => p.active && (p.quadro ?? 'Quadro 1') === form.quadro)
+  const quadroPlayers = players.filter((p) => p.active && getPlayerQuadros(p).includes(form.quadro))
   const qColor = QUADRO_COLORS[form.quadro]
 
   const togglePresence = (id) => {

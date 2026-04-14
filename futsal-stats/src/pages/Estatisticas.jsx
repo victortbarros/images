@@ -97,41 +97,41 @@ export function Estatisticas() {
         <p className="text-sm text-slate-400">Clique em um jogador para detalhes · Clique no cabeçalho para ordenar</p>
       </div>
 
-      {/* Quadro tabs + date filter */}
-      <div className="flex flex-wrap gap-2 mb-4 items-center">
-        <div className="flex gap-2">
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab
-            const qColor = QUADRO_COLORS[tab]
-            const count = allStats.filter(({ player }) =>
-              tab === 'Todos' ? true : getPlayerQuadros(player).includes(tab)
-            ).length
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
-                  isActive
-                    ? qColor ? `${qColor.bg} text-white border-transparent` : 'bg-pitch text-white border-transparent'
-                    : 'bg-slate-800 text-slate-400 border-slate-600 hover:text-white'
-                }`}
-              >
-                {tab} <span className="ml-1 text-xs opacity-75">({count})</span>
-              </button>
-            )
-          })}
-        </div>
-        <div className="flex items-center gap-1.5 ml-auto flex-wrap">
-          <span className="text-xs text-slate-500">Período:</span>
-          <input type="date" className="input text-xs w-auto py-1" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-          <span className="text-xs text-slate-500">–</span>
-          <input type="date" className="input text-xs w-auto py-1" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
-          {hasDateFilter && (
-            <button className="text-xs text-slate-400 hover:text-white flex items-center gap-1" onClick={clearDates}>
-              <X size={12} /> Limpar
+      {/* Quadro tabs */}
+      <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab
+          const qColor = QUADRO_COLORS[tab]
+          const count = allStats.filter(({ player }) =>
+            tab === 'Todos' ? true : getPlayerQuadros(player).includes(tab)
+          ).length
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                isActive
+                  ? qColor ? `${qColor.bg} text-white border-transparent` : 'bg-pitch text-white border-transparent'
+                  : 'bg-slate-800 text-slate-400 border-slate-600 hover:text-white'
+              }`}
+            >
+              {tab} <span className="ml-1 text-xs opacity-75">({count})</span>
             </button>
-          )}
-        </div>
+          )
+        })}
+      </div>
+
+      {/* Date filter */}
+      <div className="flex items-center gap-1.5 mb-4 flex-wrap">
+        <span className="text-xs text-slate-500">Período:</span>
+        <input type="date" className="input text-xs w-auto py-1" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+        <span className="text-xs text-slate-500">–</span>
+        <input type="date" className="input text-xs w-auto py-1" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+        {hasDateFilter && (
+          <button className="text-xs text-slate-400 hover:text-white flex items-center gap-1" onClick={clearDates}>
+            <X size={12} /> Limpar
+          </button>
+        )}
       </div>
 
       {hasDateFilter && (

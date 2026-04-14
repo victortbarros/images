@@ -11,9 +11,15 @@
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  /* Prevent horizontal scroll on mobile */
+  overflow-x: hidden;
 }
 
 @layer components {
+  /* iPhone safe area support */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
   .nav-link {
     @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors text-sm font-medium;
   }

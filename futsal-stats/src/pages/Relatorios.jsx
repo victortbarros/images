@@ -253,14 +253,14 @@ export function Relatorios() {
       </div>
 
       {/* Quadro filter */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
         {TABS.map((tab) => {
           const qColor = QUADRO_COLORS[tab]
           return (
             <button
               key={tab}
               onClick={() => setQuadroFilter(tab)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+              className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
                 quadroFilter === tab
                   ? qColor ? `${qColor.bg} text-white border-transparent` : 'bg-pitch text-white border-transparent'
                   : 'bg-slate-800 text-slate-400 border-slate-600 hover:text-white'
