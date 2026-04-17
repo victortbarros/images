@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Trash2, Plus, UserCheck, Star, Lock, Send } from 'lucide-react'
+import { ArrowLeft, Trash2, Plus, UserCheck, Star, Lock, Send, Trophy } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { ConfirmDialog } from '../components/common/ConfirmDialog'
 import { VenueBadge, QuadroBadge } from '../components/common/Badge'
@@ -110,6 +110,57 @@ function StartersSection({ match, players, toggleStarter, readOnly }) {
   )
 }
 
+// ── MVP Section ───────────────────────────────────────────────────────────────
+function MvpSection({ match, players, setMvp, readOnly }) {
+  const presences = match.presences ?? []
+  const presentPlayers = players.filter((p) => p.active && presences.includes(p.id))
+  const mvpId = match.mvpPlayerId ?? null
+
+  if (presentPlayers.length === 0) return null
+
+  const handleSelect = (pid) => {
+    if (readOnly) return
+    setMvp(match.id, mvpId === pid ? null : pid)
+  }
+
+  return (
+    <div className="card p-4 mb-3">
+      <div className="flex items-center gap-2 mb-3">
+        <Trophy size={16} className="text-yellow-400" />
+        <h2 className="text-sm font-semibold text-white">Destaque da Partida</h2>
+        {readOnly && <Lock size={12} className="text-slate-500 ml-auto" />}
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+        {presentPlayers.map((p) => {
+          const isMvp = mvpId === p.id
+          return (
+            <button
+              key={p.id}
+              type="button"
+              disabled={readOnly}
+              onClick={() => handleSelect(p.id)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors border ${
+                isMvp
+                  ? 'bg-yellow-600 text-white border-transparent'
+                  : 'bg-slate-700 text-slate-400 border-slate-600'
+              } ${readOnly ? 'opacity-75 cursor-default' : 'hover:text-white'}`}
+            >
+              <Trophy size={12} className={isMvp ? 'text-yellow-200' : 'text-slate-600'} />
+              <span className="font-bold w-5 text-center text-xs">#{p.number}</span>
+              <span className="truncate">{p.name}</span>
+            </button>
+          )
+        })}
+      </div>
+      {mvpId && (
+        <p className="text-xs text-yellow-400 mt-2">
+          🏆 {players.find((p) => p.id === mvpId)?.name} — Destaque da partida
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ── Add Event Form ─────────────────────────────────────────────────────────────
 function AddEventForm({ match, players, onClose }) {
   const { addEvent } = useApp()
@@ -174,7 +225,7 @@ function AddEventForm({ match, players, onClose }) {
 export function DetalhePartida() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { matches, players, removeEvent, deleteMatch, togglePresence, toggleStarter, updateMatch, publishMatch } = useApp()
+  const { matches, players, removeEvent, deleteMatch, togglePresence, toggleStarter, updateMatch, publishMatch, setMvp } = useApp()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [confirmPublish, setConfirmPublish] = useState(false)
   const [showAddEvent, setShowAddEvent] = useState(false)
@@ -306,6 +357,9 @@ export function DetalhePartida() {
 
       {/* Starters */}
       <StartersSection match={match} players={players} toggleStarter={toggleStarter} readOnly={!isDraft} />
+
+      {/* MVP */}
+      <MvpSection match={match} players={players} setMvp={setMvp} readOnly={!isDraft} />
 
       {/* Events */}
       <div className="card p-4 mb-3">

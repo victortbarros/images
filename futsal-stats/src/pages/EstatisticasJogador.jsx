@@ -61,6 +61,7 @@ export function EstatisticasJogador() {
         <StatCard icon="🎯" label="Assistências" value={stats.assists} />
         <StatCard icon="🟨" label="Cartões Amarelos" value={stats.yellowCards} color="text-yellow-400" />
         <StatCard icon="🟥" label="Cartões Vermelhos" value={stats.redCards} color="text-red-400" />
+        <StatCard icon="🏆" label="Destaque" value={stats.mvpCount ?? 0} color="text-yellow-400" sub="vezes destaque" />
       </div>
 
       <div className="card p-4">

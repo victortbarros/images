@@ -26,6 +26,7 @@ function mapMatch(m) {
     presences: m.presences ?? [],
     starters: m.starters ?? [],
     status: m.status ?? 'draft',
+    mvpPlayerId: m.mvp_player_id ?? null,
     events,
     createdAt: m.created_at,
   }
@@ -169,6 +170,12 @@ export function AppProvider({ children }) {
     })
   }, [])
 
+  const setMvp = useCallback(async (matchId, playerId) => {
+    const newMvp = playerId || null
+    setMatches((prev) => prev.map((m) => (m.id === matchId ? { ...m, mvpPlayerId: newMvp } : m)))
+    await supabase.from('matches').update({ mvp_player_id: newMvp }).eq('id', matchId)
+  }, [])
+
   const addEvent = useCallback(async (matchId, eventData) => {
     const { data: row } = await supabase.from('match_events').insert({
       match_id: matchId, type: eventData.type, player_id: eventData.playerId,
@@ -280,6 +287,7 @@ export function AppProvider({ children }) {
       addEvent, removeEvent, addEventsToMatch,
       togglePresence, setPresences,
       toggleStarter, setStarters,
+      setMvp,
       addEntry, updateEntry, deleteEntry,
     }}>
       {children}
