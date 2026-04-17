@@ -16,12 +16,23 @@ function mapEvent(e) {
 }
 
 function mapMatch(m) {
+  const events = (m.match_events ?? []).map(mapEvent)
   return {
     id: m.id, date: m.date, opponent: m.opponent, venue: m.venue,
-    competition: m.competition, ourScore: m.our_score, theirScore: m.their_score,
-    notes: m.notes, quadro: m.quadro, presences: m.presences ?? [],
-    events: (m.match_events ?? []).map(mapEvent), createdAt: m.created_at,
+    competition: m.competition,
+    ourScore: events.filter(e => e.type === 'goal').length,
+    theirScore: m.their_score,
+    notes: m.notes, quadro: m.quadro,
+    presences: m.presences ?? [],
+    starters: m.starters ?? [],
+    status: m.status ?? 'draft',
+    events,
+    createdAt: m.created_at,
   }
+}
+
+function recomputeScore(match) {
+  return { ...match, ourScore: match.events.filter(e => e.type === 'goal').length }
 }
 
 function mapEntry(e) {
@@ -116,8 +127,9 @@ export function AppProvider({ children }) {
     const { data: row } = await supabase.from('matches').insert({
       team_id: teamIdRef.current, date: data.date, opponent: data.opponent,
       venue: data.venue, competition: data.competition ?? '',
-      our_score: Number(data.ourScore), their_score: Number(data.theirScore),
-      notes: data.notes ?? '', quadro: data.quadro ?? 'Quadro 1', presences: [],
+      our_score: 0, their_score: 0,
+      notes: data.notes ?? '', quadro: data.quadro ?? 'Quadro 1',
+      presences: [], starters: [], status: 'draft',
     }).select().single()
     if (row) {
       const match = mapMatch({ ...row, match_events: [] })
@@ -129,7 +141,6 @@ export function AppProvider({ children }) {
   const updateMatch = useCallback(async (id, data) => {
     const db = {}
     if ('opponent' in data)    db.opponent = data.opponent
-    if ('ourScore' in data)    db.our_score = Number(data.ourScore)
     if ('theirScore' in data)  db.their_score = Number(data.theirScore)
     if ('venue' in data)       db.venue = data.venue
     if ('competition' in data) db.competition = data.competition
@@ -145,20 +156,41 @@ export function AppProvider({ children }) {
     setMatches((prev) => prev.filter((m) => m.id !== id))
   }, [])
 
+  const publishMatch = useCallback(async (matchId) => {
+    setMatches((prev) => {
+      const match = prev.find((m) => m.id === matchId)
+      if (!match) return prev
+      supabase.from('matches').update({
+        status: 'published',
+        our_score: match.ourScore,
+        their_score: match.theirScore,
+      }).eq('id', matchId).then(() => {})
+      return prev.map((m) => (m.id === matchId ? { ...m, status: 'published' } : m))
+    })
+  }, [])
+
   const addEvent = useCallback(async (matchId, eventData) => {
     const { data: row } = await supabase.from('match_events').insert({
       match_id: matchId, type: eventData.type, player_id: eventData.playerId,
       minute: eventData.minute ?? null, value: Number(eventData.value) || 1,
     }).select().single()
     if (row) setMatches((prev) =>
-      prev.map((m) => (m.id === matchId ? { ...m, events: [...m.events, mapEvent(row)] } : m))
+      prev.map((m) => {
+        if (m.id !== matchId) return m
+        const newEvents = [...m.events, mapEvent(row)]
+        return recomputeScore({ ...m, events: newEvents })
+      })
     )
   }, [])
 
   const removeEvent = useCallback(async (matchId, eventId) => {
     await supabase.from('match_events').delete().eq('id', eventId)
     setMatches((prev) =>
-      prev.map((m) => (m.id === matchId ? { ...m, events: m.events.filter((e) => e.id !== eventId) } : m))
+      prev.map((m) => {
+        if (m.id !== matchId) return m
+        const newEvents = m.events.filter((e) => e.id !== eventId)
+        return recomputeScore({ ...m, events: newEvents })
+      })
     )
   }, [])
 
@@ -169,7 +201,11 @@ export function AppProvider({ children }) {
     }))
     const { data } = await supabase.from('match_events').insert(rows).select()
     if (data) setMatches((prev) =>
-      prev.map((m) => (m.id === matchId ? { ...m, events: [...m.events, ...data.map(mapEvent)] } : m))
+      prev.map((m) => {
+        if (m.id !== matchId) return m
+        const newEvents = [...m.events, ...data.map(mapEvent)]
+        return recomputeScore({ ...m, events: newEvents })
+      })
     )
   }, [])
 
@@ -180,14 +216,38 @@ export function AppProvider({ children }) {
       const newPresences = match.presences.includes(playerId)
         ? match.presences.filter((id) => id !== playerId)
         : [...match.presences, playerId]
-      supabase.from('matches').update({ presences: newPresences }).eq('id', matchId).then(() => {})
-      return prev.map((m) => (m.id === matchId ? { ...m, presences: newPresences } : m))
+      // if removing presence, also remove from starters
+      const newStarters = newPresences.includes(playerId)
+        ? match.starters
+        : match.starters.filter((id) => id !== playerId)
+      supabase.from('matches').update({ presences: newPresences, starters: newStarters }).eq('id', matchId).then(() => {})
+      return prev.map((m) => (m.id === matchId ? { ...m, presences: newPresences, starters: newStarters } : m))
     })
   }, [])
 
   const setPresences = useCallback(async (matchId, playerIds) => {
     setMatches((prev) => prev.map((m) => (m.id === matchId ? { ...m, presences: playerIds } : m)))
     await supabase.from('matches').update({ presences: playerIds }).eq('id', matchId)
+  }, [])
+
+  const toggleStarter = useCallback(async (matchId, playerId) => {
+    setMatches((prev) => {
+      const match = prev.find((m) => m.id === matchId)
+      if (!match) return prev
+      const starters = match.starters ?? []
+      const isStarter = starters.includes(playerId)
+      if (!isStarter && starters.length >= 5) return prev
+      const newStarters = isStarter
+        ? starters.filter((id) => id !== playerId)
+        : [...starters, playerId]
+      supabase.from('matches').update({ starters: newStarters }).eq('id', matchId).then(() => {})
+      return prev.map((m) => (m.id === matchId ? { ...m, starters: newStarters } : m))
+    })
+  }, [])
+
+  const setStarters = useCallback(async (matchId, playerIds) => {
+    setMatches((prev) => prev.map((m) => (m.id === matchId ? { ...m, starters: playerIds } : m)))
+    await supabase.from('matches').update({ starters: playerIds }).eq('id', matchId)
   }, [])
 
   const addEntry = useCallback(async (data) => {
@@ -216,9 +276,10 @@ export function AppProvider({ children }) {
       players, matches, settings, entries, dataLoading,
       updateSettings,
       addPlayer, updatePlayer, removePlayer,
-      addMatch, updateMatch, deleteMatch,
+      addMatch, updateMatch, deleteMatch, publishMatch,
       addEvent, removeEvent, addEventsToMatch,
       togglePresence, setPresences,
+      toggleStarter, setStarters,
       addEntry, updateEntry, deleteEntry,
     }}>
       {children}

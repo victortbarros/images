@@ -13,6 +13,7 @@ const COLUMNS = [
   { key: 'name', label: 'Jogador' },
   { key: 'matchesPlayed', label: 'Jogos', title: 'Partidas presentes' },
   { key: 'frequenciaPercent', label: 'Freq.', title: 'Frequência (%)' },
+  { key: 'starterCount', label: 'Tit.', title: 'Vezes titular' },
   { key: 'goals', label: 'Gols' },
   { key: 'assists', label: 'Assist.' },
   { key: 'yellowCards', label: 'CA', title: 'Cartões Amarelos' },
@@ -79,6 +80,7 @@ export function Estatisticas() {
     return {
       frequencia: totalQ > 0 ? `${totalPresences}/${totalQ}` : '0/0',
       frequenciaPercent: totalQ > 0 ? Math.round((totalPresences / totalQ) * 100) : 0,
+      starterCount: sorted.reduce((s, r) => s + (r.starterCount ?? 0), 0),
       goals: sorted.reduce((s, r) => s + r.goals, 0),
       assists: sorted.reduce((s, r) => s + r.assists, 0),
       yellowCards: sorted.reduce((s, r) => s + r.yellowCards, 0),
@@ -161,9 +163,9 @@ export function Estatisticas() {
           </thead>
           <tbody>
             {sorted.length === 0 ? (
-              <tr><td colSpan={7} className="text-center py-8 text-slate-500 text-sm">Nenhum jogador neste filtro.</td></tr>
+              <tr><td colSpan={8} className="text-center py-8 text-slate-500 text-sm">Nenhum jogador neste filtro.</td></tr>
             ) : (
-              sorted.map(({ player, goals, assists, yellowCards, redCards, frequencia, frequenciaPercent }) => (
+              sorted.map(({ player, goals, assists, yellowCards, redCards, frequencia, frequenciaPercent, starterCount }) => (
                 <tr
                   key={player.id}
                   className="border-b border-slate-700/50 last:border-0 hover:bg-slate-700/30 cursor-pointer transition-colors"
@@ -178,6 +180,7 @@ export function Estatisticas() {
                   </td>
                   <td className="px-4 py-3 text-slate-300 font-medium">{frequencia}</td>
                   <td className="px-4 py-3"><FrequencyBar percent={frequenciaPercent} /></td>
+                  <td className="px-4 py-3 text-amber-400 font-medium">{starterCount ?? 0}</td>
                   <td className="px-4 py-3 font-semibold text-green-400">{goals}</td>
                   <td className="px-4 py-3 text-slate-300">{assists}</td>
                   <td className="px-4 py-3 text-yellow-400">{yellowCards}</td>
@@ -192,6 +195,7 @@ export function Estatisticas() {
                 <td className="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wide">Total</td>
                 <td className="px-4 py-2 text-slate-300 font-bold">{totals.frequencia}</td>
                 <td className="px-4 py-2"><FrequencyBar percent={totals.frequenciaPercent} /></td>
+                <td className="px-4 py-2 font-bold text-amber-400">{totals.starterCount}</td>
                 <td className="px-4 py-2 font-bold text-green-400">{totals.goals}</td>
                 <td className="px-4 py-2 font-bold text-slate-300">{totals.assists}</td>
                 <td className="px-4 py-2 font-bold text-yellow-400">{totals.yellowCards}</td>

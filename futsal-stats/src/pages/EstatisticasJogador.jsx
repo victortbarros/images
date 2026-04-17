@@ -56,11 +56,11 @@ export function EstatisticasJogador() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
         <StatCard icon="📋" label="Jogos" value={stats.frequencia} sub={`${stats.frequenciaPercent}% de frequência`} />
+        <StatCard icon="⭐" label="Titular" value={stats.starterCount ?? 0} color="text-amber-400" sub="vezes escalado" />
         <StatCard icon="⚽" label="Gols" value={stats.goals} color="text-green-400" />
         <StatCard icon="🎯" label="Assistências" value={stats.assists} />
         <StatCard icon="🟨" label="Cartões Amarelos" value={stats.yellowCards} color="text-yellow-400" />
         <StatCard icon="🟥" label="Cartões Vermelhos" value={stats.redCards} color="text-red-400" />
-        <StatCard icon="⏱" label="Minutos" value={stats.minutesPlayed} sub={`média: ${stats.matchesPlayed > 0 ? (stats.minutesPlayed / stats.matchesPlayed).toFixed(1) : '—'} min/jogo`} />
       </div>
 
       <div className="card p-4">

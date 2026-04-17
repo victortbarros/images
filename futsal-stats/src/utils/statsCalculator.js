@@ -12,9 +12,12 @@ export function computePlayerStats(matches, playerId, playerQuadros = ['Quadro 1
     (m) => playerQuadros.includes(m.quadro ?? 'Quadro 1')
   ).length
 
+  let starterCount = 0
+
   for (const match of matches) {
     const presences = match.presences ?? []
     if (presences.includes(playerId)) matchesPresent++
+    if ((match.starters ?? []).includes(playerId)) starterCount++
 
     for (const event of match.events.filter((e) => e.playerId === playerId)) {
       if (event.type === 'goal') goals++
@@ -44,6 +47,7 @@ export function computePlayerStats(matches, playerId, playerQuadros = ['Quadro 1
     totalQuadroMatches,
     frequencia,
     frequenciaPercent,
+    starterCount,
   }
 }
 
