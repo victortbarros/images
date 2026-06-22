@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#1a472a"/>
+  <!-- Outer glow ring -->
+  <circle cx="256" cy="230" r="140" fill="none" stroke="#2d6a4f" stroke-width="12"/>
+  <!-- Ball body -->
+  <circle cx="256" cy="230" r="110" fill="white"/>
+  <!-- Ball shadow -->
+  <circle cx="256" cy="230" r="110" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+  <!-- Center pentagon -->
+  <polygon points="256,195 287,217 275,252 237,252 225,217" fill="#1a472a"/>
+  <!-- Top pentagon -->
+  <polygon points="256,120 284,140 275,168 237,168 228,140" fill="#1a472a" opacity="0.85"/>
+  <!-- Bottom-left pentagon -->
+  <polygon points="175,248 199,231 213,258 198,284 169,276" fill="#1a472a" opacity="0.85"/>
+  <!-- Bottom-right pentagon -->
+  <polygon points="337,248 313,231 299,258 314,284 343,276" fill="#1a472a" opacity="0.85"/>
+  <!-- Seam lines -->
+  <line x1="256" y1="168" x2="256" y2="195" stroke="#1a472a" stroke-width="4"/>
+  <line x1="287" y1="217" x2="299" y2="208" stroke="#1a472a" stroke-width="4"/>
+  <line x1="275" y1="252" x2="284" y2="268" stroke="#1a472a" stroke-width="4"/>
+  <line x1="237" y1="252" x2="228" y2="268" stroke="#1a472a" stroke-width="4"/>
+  <line x1="225" y1="217" x2="213" y2="208" stroke="#1a472a" stroke-width="4"/>
+  <!-- Team label -->
+  <rect x="96" y="368" width="320" height="80" rx="16" fill="#0d2e18"/>
+  <text x="256" y="422" font-size="42" font-weight="800" font-family="system-ui, -apple-system, sans-serif" fill="white" text-anchor="middle" letter-spacing="-1">FUTSAL</text>
+</svg>
