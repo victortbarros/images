@@ -43,9 +43,13 @@ function mapEntry(e) {
   }
 }
 
+const CURRENT_TEAM_KEY = 'futsal_current_team'
+
 export function AppProvider({ children }) {
   const { user } = useAuth()
   const [teamId, setTeamId] = useState(null)
+  const [teams, setTeams] = useState([])          // [{ id, name, logo, role }]
+  const [userRole, setUserRole] = useState(null)  // 'admin' | 'gestor' | 'leitura'
   const [players, setPlayers] = useState([])
   const [matches, setMatches] = useState([])
   const [settings, setSettings] = useState({ teamName: 'Futsal Stats', teamLogo: null })
@@ -57,29 +61,71 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     if (!user) {
-      setTeamId(null); setPlayers([]); setMatches([]); setEntries([]); setDataLoading(false)
+      setTeamId(null); setTeams([]); setUserRole(null)
+      setPlayers([]); setMatches([]); setEntries([]); setDataLoading(false)
       return
     }
-    initTeam()
+    initData()
   }, [user?.id])
 
-  const initTeam = async () => {
+  const initData = async () => {
     setDataLoading(true)
     try {
-      let { data: teams } = await supabase.from('teams').select('*').eq('owner_id', user.id).limit(1)
-      let team = teams?.[0]
-      if (!team) {
-        const { data } = await supabase.from('teams').insert({ owner_id: user.id, name: 'Meu Time' }).select().single()
-        team = data
+      // aceita convites pendentes para o email deste usuário
+      await supabase.rpc('accept_invites')
+
+      // carrega todos os times dos quais é membro (+ papel)
+      const { data: memberships } = await supabase
+        .from('team_members')
+        .select('role, team_id, teams(id, name, logo)')
+        .eq('user_id', user.id)
+
+      let teamList = (memberships ?? [])
+        .filter((m) => m.teams)
+        .map((m) => ({ id: m.team_id, name: m.teams.name, logo: m.teams.logo ?? null, role: m.role }))
+
+      // fallback: nenhum time (não deveria acontecer com o trigger)
+      if (teamList.length === 0) {
+        const { data: t } = await supabase.from('teams').insert({ owner_id: user.id, name: 'Meu Time' }).select().single()
+        if (t) {
+          await supabase.from('team_members').insert({ team_id: t.id, user_id: user.id, role: 'admin' })
+          teamList = [{ id: t.id, name: t.name, logo: t.logo ?? null, role: 'admin' }]
+        }
       }
-      setTeamId(team.id)
-      teamIdRef.current = team.id
-      setSettings({ teamName: team.name, teamLogo: team.logo ?? null })
-      await Promise.all([loadPlayers(team.id), loadMatches(team.id), loadEntries(team.id)])
+      setTeams(teamList)
+
+      const saved = localStorage.getItem(CURRENT_TEAM_KEY)
+      const current = teamList.find((t) => t.id === saved) ?? teamList[0]
+      if (!current) return
+
+      setTeamId(current.id)
+      teamIdRef.current = current.id
+      setUserRole(current.role)
+      setSettings({ teamName: current.name, teamLogo: current.logo })
+      await loadTeamData(current.id, current.role)
     } finally {
       setDataLoading(false)
     }
   }
+
+  const loadTeamData = async (tid, role) => {
+    const tasks = [loadPlayers(tid), loadMatches(tid)]
+    if (role === 'admin') tasks.push(loadEntries(tid))
+    else setEntries([])
+    await Promise.all(tasks)
+  }
+
+  const setCurrentTeam = useCallback(async (tid) => {
+    const t = teams.find((x) => x.id === tid)
+    if (!t || tid === teamIdRef.current) return
+    localStorage.setItem(CURRENT_TEAM_KEY, tid)
+    setTeamId(tid)
+    teamIdRef.current = tid
+    setUserRole(t.role)
+    setSettings({ teamName: t.name, teamLogo: t.logo })
+    setDataLoading(true)
+    try { await loadTeamData(tid, t.role) } finally { setDataLoading(false) }
+  }, [teams])
 
   const loadPlayers = async (tid) => {
     const { data } = await supabase.from('players').select('*').eq('team_id', tid).order('number')
@@ -97,8 +143,11 @@ export function AppProvider({ children }) {
   const updateSettings = useCallback(async (data) => {
     setSettings((prev) => {
       const next = { ...prev, ...data }
-      if (teamIdRef.current)
-        supabase.from('teams').update({ name: next.teamName, logo: next.teamLogo ?? null }).eq('id', teamIdRef.current).then(() => {})
+      const tid = teamIdRef.current
+      if (tid) {
+        supabase.from('teams').update({ name: next.teamName, logo: next.teamLogo ?? null }).eq('id', tid).then(() => {})
+        setTeams((list) => list.map((t) => (t.id === tid ? { ...t, name: next.teamName, logo: next.teamLogo ?? null } : t)))
+      }
       return next
     })
   }, [])
@@ -281,6 +330,7 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider value={{
       players, matches, settings, entries, dataLoading,
+      teams, currentTeamId: teamId, userRole, setCurrentTeam,
       updateSettings,
       addPlayer, updatePlayer, removePlayer,
       addMatch, updateMatch, deleteMatch, publishMatch,

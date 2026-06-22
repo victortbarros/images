@@ -5,7 +5,7 @@ import { PositionBadge, QuadrosBadges } from '../common/Badge'
 import { useStats } from '../../hooks/useStats'
 import { getPlayerQuadros } from '../../utils/playerHelpers'
 
-export function PlayerCard({ player, onEdit, onRemove }) {
+export function PlayerCard({ player, onEdit, onRemove, readOnly }) {
   const navigate = useNavigate()
   const { getPlayerStats } = useStats()
   const stats = getPlayerStats(player.id)
@@ -30,16 +30,18 @@ export function PlayerCard({ player, onEdit, onRemove }) {
           <span>📋 {stats.frequencia}</span>
         </div>
       </div>
-      <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-        <button className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg transition-colors" onClick={onEdit} title="Editar">
-          <Pencil size={15} />
-        </button>
-        {player.active && (
-          <button className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-600 rounded-lg transition-colors" onClick={onRemove} title="Desativar">
-            <UserX size={15} />
+      {!readOnly && (
+        <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <button className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg transition-colors" onClick={onEdit} title="Editar">
+            <Pencil size={15} />
           </button>
-        )}
-      </div>
+          {player.active && (
+            <button className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-600 rounded-lg transition-colors" onClick={onRemove} title="Desativar">
+              <UserX size={15} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

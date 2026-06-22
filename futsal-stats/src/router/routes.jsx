@@ -9,6 +9,9 @@ import { DetalhePartida } from '../pages/DetalhePartida'
 import { Estatisticas } from '../pages/Estatisticas'
 import { Financeiro } from '../pages/Financeiro'
 import { Relatorios } from '../pages/Relatorios'
+import { Equipe } from '../pages/Equipe'
+import { RequireRole } from '../components/common/RequireRole'
+import { canEdit, canSeeFinance, canManageTeam } from '../utils/permissions'
 
 export const router = createBrowserRouter([
   {
@@ -19,11 +22,12 @@ export const router = createBrowserRouter([
       { path: 'elenco', element: <Elenco /> },
       { path: 'elenco/:id', element: <EstatisticasJogador /> },
       { path: 'partidas', element: <Partidas /> },
-      { path: 'partidas/nova', element: <NovaPartida /> },
+      { path: 'partidas/nova', element: <RequireRole allow={canEdit}><NovaPartida /></RequireRole> },
       { path: 'partidas/:id', element: <DetalhePartida /> },
       { path: 'estatisticas', element: <Estatisticas /> },
-      { path: 'financeiro', element: <Financeiro /> },
+      { path: 'financeiro', element: <RequireRole allow={canSeeFinance}><Financeiro /></RequireRole> },
       { path: 'relatorios', element: <Relatorios /> },
+      { path: 'equipe', element: <RequireRole allow={canManageTeam}><Equipe /></RequireRole> },
     ],
   },
 ])

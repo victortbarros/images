@@ -5,12 +5,14 @@ import { useApp } from '../context/AppContext'
 import { EmptyState } from '../components/common/EmptyState'
 import { MatchCard } from '../components/partidas/MatchCard'
 import { QUADROS } from '../constants/positions'
+import { canEdit } from '../utils/permissions'
 
 const ALL_QUADROS = ['Todos', ...QUADROS]
 
 export function Partidas() {
   const navigate = useNavigate()
-  const { matches } = useApp()
+  const { matches, userRole } = useApp()
+  const editable = canEdit(userRole)
   const [search, setSearch] = useState('')
   const [quadroFilter, setQuadroFilter] = useState('Todos')
   const [dateFrom, setDateFrom] = useState('')
@@ -46,9 +48,11 @@ export function Partidas() {
             {filtered.length} de {matches.length} partida{matches.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button className="btn-primary" onClick={() => navigate('/partidas/nova')}>
-          <Plus size={16} /> Nova partida
-        </button>
+        {editable && (
+          <button className="btn-primary" onClick={() => navigate('/partidas/nova')}>
+            <Plus size={16} /> Nova partida
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -99,7 +103,7 @@ export function Partidas() {
           icon="📅"
           title="Nenhuma partida registrada"
           description="Registre a primeira partida do time para começar a acompanhar os resultados."
-          action={<button className="btn-primary" onClick={() => navigate('/partidas/nova')}><Plus size={16} /> Registrar partida</button>}
+          action={editable ? <button className="btn-primary" onClick={() => navigate('/partidas/nova')}><Plus size={16} /> Registrar partida</button> : undefined}
         />
       ) : filtered.length === 0 ? (
         <EmptyState icon="🔍" title="Nenhuma partida encontrada" description="Tente outros filtros." action={

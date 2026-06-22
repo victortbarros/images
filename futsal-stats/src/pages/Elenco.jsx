@@ -9,6 +9,7 @@ import { PlayerCard } from '../components/elenco/PlayerCard'
 import { PlayerForm } from '../components/elenco/PlayerForm'
 import { POSITIONS, QUADROS } from '../constants/positions'
 import { getPlayerQuadros } from '../utils/playerHelpers'
+import { canEdit } from '../utils/permissions'
 
 const SORT_OPTIONS = [
   { value: 'name', label: 'Nome' },
@@ -21,7 +22,8 @@ const SORT_OPTIONS = [
 const ALL_QUADROS = ['Todos', ...QUADROS]
 
 export function Elenco() {
-  const { players, removePlayer } = useApp()
+  const { players, removePlayer, userRole } = useApp()
+  const editable = canEdit(userRole)
   const { allStats } = useStats()
   const [showForm, setShowForm] = useState(false)
   const [editPlayer, setEditPlayer] = useState(null)
@@ -70,9 +72,11 @@ export function Elenco() {
           <h1 className="text-xl font-bold text-white">Elenco</h1>
           <p className="text-sm text-slate-400">{activePlayers.length} jogador{activePlayers.length !== 1 ? 'es' : ''} ativo{activePlayers.length !== 1 ? 's' : ''}</p>
         </div>
-        <button className="btn-primary" onClick={() => { setEditPlayer(null); setShowForm(true) }}>
-          <Plus size={16} /> Adicionar
-        </button>
+        {editable && (
+          <button className="btn-primary" onClick={() => { setEditPlayer(null); setShowForm(true) }}>
+            <Plus size={16} /> Adicionar
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -127,7 +131,7 @@ export function Elenco() {
           icon="👥"
           title={players.length === 0 ? 'Nenhum jogador cadastrado' : 'Nenhum resultado encontrado'}
           description={players.length === 0 ? 'Adicione jogadores ao elenco para começar a registrar estatísticas.' : undefined}
-          action={players.length === 0 ? (
+          action={players.length === 0 && editable ? (
             <button className="btn-primary" onClick={() => setShowForm(true)}><Plus size={16} /> Adicionar primeiro jogador</button>
           ) : undefined}
         />
@@ -137,6 +141,7 @@ export function Elenco() {
             <PlayerCard
               key={p.id}
               player={p}
+              readOnly={!editable}
               onEdit={(e) => { e?.stopPropagation?.(); setEditPlayer(p); setShowForm(true) }}
               onRemove={(e) => { e?.stopPropagation?.(); setRemoveTarget(p) }}
             />

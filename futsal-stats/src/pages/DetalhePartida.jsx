@@ -7,6 +7,7 @@ import { VenueBadge, QuadroBadge } from '../components/common/Badge'
 import { formatDate, formatMatchResult, resultColor } from '../utils/formatters'
 import { EVENT_TYPES, QUADRO_COLORS } from '../constants/positions'
 import { getPlayerQuadros } from '../utils/playerHelpers'
+import { canEdit } from '../utils/permissions'
 
 // ── Presence Section ──────────────────────────────────────────────────────────
 function PresenceSection({ match, players, togglePresence, readOnly }) {
@@ -225,7 +226,7 @@ function AddEventForm({ match, players, onClose }) {
 export function DetalhePartida() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { matches, players, removeEvent, deleteMatch, togglePresence, toggleStarter, updateMatch, publishMatch, setMvp } = useApp()
+  const { matches, players, removeEvent, deleteMatch, togglePresence, toggleStarter, updateMatch, publishMatch, setMvp, userRole } = useApp()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [confirmPublish, setConfirmPublish] = useState(false)
   const [showAddEvent, setShowAddEvent] = useState(false)
@@ -246,6 +247,7 @@ export function DetalhePartida() {
   }
 
   const isDraft = match.status === 'draft'
+  const editable = isDraft && canEdit(userRole)
   const getPlayer = (pid) => players.find((p) => p.id === pid)
   const getPlayerName = (pid) => getPlayer(pid)?.name ?? 'Jogador desconhecido'
   const getEventLabel = (t) => EVENT_TYPES.find((e) => e.value === t)?.label ?? t
@@ -293,7 +295,7 @@ export function DetalhePartida() {
               <Lock size={10} /> Publicada
             </span>
           )}
-          {isDraft && (
+          {editable && (
             <button
               className="text-slate-500 hover:text-red-400 transition-colors p-2"
               onClick={() => setConfirmDelete(true)}
@@ -334,15 +336,15 @@ export function DetalhePartida() {
               </div>
             ) : (
               <div
-                className={`text-5xl font-bold text-white ${isDraft ? 'cursor-pointer hover:text-amber-400 transition-colors' : ''}`}
-                onClick={() => { if (isDraft) { setTheirScore(String(match.theirScore)); setEditingScore(true) } }}
-                title={isDraft ? 'Clique para editar gols sofridos' : ''}
+                className={`text-5xl font-bold text-white ${editable ? 'cursor-pointer hover:text-amber-400 transition-colors' : ''}`}
+                onClick={() => { if (editable) { setTheirScore(String(match.theirScore)); setEditingScore(true) } }}
+                title={editable ? 'Clique para editar gols sofridos' : ''}
               >
                 {match.theirScore}
               </div>
             )}
             <div className="text-xs text-slate-400 mt-1">{match.opponent}</div>
-            {isDraft && !editingScore && <div className="text-xs text-amber-500 mt-0.5">toque para editar</div>}
+            {editable && !editingScore && <div className="text-xs text-amber-500 mt-0.5">toque para editar</div>}
           </div>
         </div>
         {!isDraft && (
@@ -353,26 +355,26 @@ export function DetalhePartida() {
       </div>
 
       {/* Presence */}
-      <PresenceSection match={match} players={players} togglePresence={togglePresence} readOnly={!isDraft} />
+      <PresenceSection match={match} players={players} togglePresence={togglePresence} readOnly={!editable} />
 
       {/* Starters */}
-      <StartersSection match={match} players={players} toggleStarter={toggleStarter} readOnly={!isDraft} />
+      <StartersSection match={match} players={players} toggleStarter={toggleStarter} readOnly={!editable} />
 
       {/* MVP */}
-      <MvpSection match={match} players={players} setMvp={setMvp} readOnly={!isDraft} />
+      <MvpSection match={match} players={players} setMvp={setMvp} readOnly={!editable} />
 
       {/* Events */}
       <div className="card p-4 mb-3">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-white">Eventos da partida</h2>
-          {isDraft && (
+          {editable && (
             <button className="btn-secondary text-xs py-1 px-3" onClick={() => setShowAddEvent(!showAddEvent)}>
               <Plus size={14} /> Adicionar
             </button>
           )}
         </div>
 
-        {isDraft && showAddEvent && (
+        {editable && showAddEvent && (
           <div className="mb-4 p-3 bg-slate-700/50 rounded-lg">
             <AddEventForm match={match} players={players} onClose={() => setShowAddEvent(false)} />
           </div>
@@ -394,7 +396,7 @@ export function DetalhePartida() {
                 </button>
                 {ev.minute && <span className="text-slate-500 text-xs">{ev.minute}'</span>}
                 {ev.type === 'minutes' && <span className="text-slate-500 text-xs">{ev.value} min</span>}
-                {isDraft && (
+                {editable && (
                   <button
                     className="text-slate-600 hover:text-red-400 transition-colors ml-1"
                     onClick={() => removeEvent(match.id, ev.id)}
@@ -416,7 +418,7 @@ export function DetalhePartida() {
       )}
 
       {/* Publish button */}
-      {isDraft && (
+      {editable && (
         <button
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-green-700 hover:bg-green-600 text-white font-semibold transition-colors"
           onClick={() => setConfirmPublish(true)}
